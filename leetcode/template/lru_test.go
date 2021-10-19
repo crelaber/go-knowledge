@@ -1,6 +1,9 @@
-package leetcode
+package template
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestNewLRU(t *testing.T) {
 	l := NewLRU(10)
@@ -10,5 +13,5 @@ func TestNewLRU(t *testing.T) {
 	if err {
 
 	}
-	print(val)
+	fmt.Println("current value =====>", val)
 }

@@ -6,9 +6,9 @@ import (
 )
 
 func TestGenerateTree(t *testing.T) {
-	trees := generateTrees(10)
-	for _, tree := range trees {
-		result := BinaryTreeInOrderTraverse(tree)
+	trees := generateTrees(20)
+	for i, _ := range trees {
+		result := BinaryTreeInOrderTraverse(trees[i])
 		fmt.Println(result)
 	}
 }

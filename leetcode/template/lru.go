@@ -1,4 +1,4 @@
-package leetcode
+package template
 
 import (
 	"container/list"
