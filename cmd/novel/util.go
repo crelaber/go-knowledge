@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 	"strings"
 )
 
@@ -66,4 +67,17 @@ func GetDirFiles(dir string) ([]fs.FileInfo, []string) {
 		}
 	}
 	return myFile, fileNames
+}
+
+// GetDirFiles2 遍历文件夹下所有文件
+func GetDirFiles2(dir string) ([]string, error) {
+	var files []string
+	var walkFunc = func(path string, info fs.FileInfo, err error) error {
+		if !info.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	}
+	err := filepath.Walk(dir, walkFunc)
+	return files, err
 }
