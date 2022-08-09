@@ -1,5 +1,7 @@
 package leetcode
 
+import "go-knowledge/leetcode/utils"
+
 //最长回文数
 func longestPalindrome(s string) string {
 	if len(s) < 2 {
@@ -16,7 +18,7 @@ func longestPalindrome(s string) string {
 	dp, maxRight, center, maxLen, begin := make([]int, len(newS)), 0, 0, 1, 0
 	for i := 0; i < len(newS); i++ {
 		if i < maxRight {
-			dp[i] = min(maxRight-i, dp[2*center-i])
+			dp[i] = utils.min(maxRight-i, dp[2*center-i])
 		}
 		left, right := i-(1+dp[i]), i+(1+dp[i])
 		for left >= 0 && right < len(newS) && newS[left] == newS[right] {
@@ -35,11 +37,4 @@ func longestPalindrome(s string) string {
 		}
 	}
 	return s[begin : begin+maxLen]
-}
-
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
 }

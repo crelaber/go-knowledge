@@ -1,5 +1,17 @@
 package datastruct
 
+//参考：https://www.topgoer.cn/docs/goalgorithm/goalgorithm-1cm6b14vcdn63
+//AVL树是一棵严格自平衡的二叉查找树，1962年，发明者 Adelson-Velsky 和 Landis 发表了论文，以两个作者的名字命名了该数据结构，这是较早发明的平衡二叉树。
+//定义如下：
+//1、首先它是一棵二叉查找树。
+//2、任意一个节点的左右子树最大高度差为1。
+//由于树特征定义，我们可以计算出其高度 h 的上界 h<=1.44log(n)，也就是最坏情况下，树的高度约等于 1.44log(n)。
+//假设高度 h 的AVL树最少有 f(h) 个节点，因为左右子树的高度差不能大于1，所以左子树和右子树最少节点为： f(h-1)，f(h-2)。
+//因此，树根节点加上左右子树的节点，满足公式 f(h) = 1 + f(h-1) + f(h-2)，初始条件 f(0)=0,f(1)=1。
+//经过数学的推算可以得出 h<=1.44log(n)
+//树的高度被限制于 1.44log(n)， 所以查找元素时使用二分查找，最坏查找 1.44log(n) 次，此时最坏时间复杂度为 1.44log(n)，去掉常数项，时间复杂度为：log(n)。
+//为了维持AVL树的特征，每次添加和删除元素都需要一次或多次旋转来调整树的平衡。调整的依据来自于二叉树节点的平衡因子：节点的左子树与右子树的高度差称为该节点的平衡因子，约束范围为 [-1，0，1]。
+
 type AVLTree struct {
 	Root *AVLTreeNode //数的根节点
 }
@@ -37,7 +49,7 @@ func (node *AVLTreeNode) UpdateTreeHeight() {
 	node.Height = maxHeight + 1
 }
 
-// 计算平衡因子
+// BalanceFactor 计算平衡因子
 func (node *AVLTreeNode) BalanceFactor() int64 {
 	var leftHeight, rightHeight int64 = 0, 0
 	if node.Left != nil {
@@ -49,7 +61,7 @@ func (node *AVLTreeNode) BalanceFactor() int64 {
 	return leftHeight - rightHeight
 }
 
-//右旋操作
+// RightRotation 右旋操作
 func RightRotation(Root *AVLTreeNode) *AVLTreeNode {
 	//只有Pivot和B，Root位置变了
 	Pivot := Root.Left
@@ -62,7 +74,7 @@ func RightRotation(Root *AVLTreeNode) *AVLTreeNode {
 	return Pivot
 }
 
-//左旋操作
+// LeftRotation 左旋操作
 func LeftRotation(Root *AVLTreeNode) *AVLTreeNode {
 	Pivot := Root.Right
 	B := Pivot.Left
@@ -73,13 +85,13 @@ func LeftRotation(Root *AVLTreeNode) *AVLTreeNode {
 	return Pivot
 }
 
-// 先左后右旋操作
+// LeftRightRotation 先左后右旋操作
 func LeftRightRotation(node *AVLTreeNode) *AVLTreeNode {
 	node.Left = LeftRotation(node.Left)
 	return RightRotation(node)
 }
 
-//先右后左旋操作
+// RightLeftRotation 先右后左旋操作
 func RightLeftRotation(node *AVLTreeNode) *AVLTreeNode {
 	node.Right = RightRotation(node.Right)
 	return LeftRotation(node)
@@ -154,7 +166,6 @@ func (tree *AVLTree) FindMaxValue() *AVLTreeNode {
 		return nil
 	}
 	return tree.Root.FindMinValue()
-
 }
 
 func (node *AVLTreeNode) FindMaxValue() *AVLTreeNode {
@@ -194,13 +205,18 @@ func (node *AVLTreeNode) Find(value int64) *AVLTreeNode {
 	}
 }
 
-//删除指定节点
+// Delete 删除指定节点
 func (tree *AVLTree) Delete(value int64) {
 	if tree.Root == nil {
 		return
 	}
 	tree.Root = tree.Root.Delete(value)
 }
+
+//当删除的值不等于当前节点的值时，在相应的子树中递归删除，递归过程中会自底向上维护AVL树的特征。
+//1、小于删除的值 value < node.Value，在左子树中递归删除：node.Left = node.Left.Delete(value)。
+//2、大于删除的值 value > node.Value，在右子树中递归删除：node.Right = node.Right.Delete(value)。
+//因为删除后可能因为旋转调整，导致树根节点变了，这时会返回新的树根，递归删除后需要将返回的新根节点赋予原来的老根节点。
 
 func (node *AVLTreeNode) Delete(value int64) *AVLTreeNode {
 	if node == nil {
@@ -249,6 +265,42 @@ func (node *AVLTreeNode) Delete(value int64) *AVLTreeNode {
 				node.Right = node.Right.Delete(minNode.Value)
 				node.Right.UpdateTreeHeight()
 			}
+		} else {
+			//只有左子树或者只有右子树
+			//只有一个子树，该子树也只有一个节点，将该节点替换被删除的节点，然后置空子树
+			if node.Left != nil {
+				//第三种情况，删除的节点只有左子树，因为树的特征，可以知道左子树其实只有一个节点，它本身，否则高度就等于2了
+				node.Value = node.Left.Value
+				node.Times = node.Left.Times
+				node.Height = 1
+				node.Left = nil
+			} else if node.Right != nil {
+				//第四种情况，
+			}
 		}
+		return node
+	}
+	//左右子树删除后需要平衡
+	var newNode *AVLTreeNode
+	// 相当于删除了右子树的节点，左边比右边高了，不平衡
+	if node.BalanceFactor() == 2 {
+		if node.Left.BalanceFactor() >= 0 {
+			newNode = RightRotation(node)
+		} else {
+			newNode = LeftRotation(node)
+		}
+	} else if node.BalanceFactor() == -2 {
+		if node.Right.BalanceFactor() <= 0 {
+			newNode = LeftRotation(node)
+		} else {
+			newNode = RightRotation(node)
+		}
+	}
+	if newNode == nil {
+		node.UpdateTreeHeight()
+		return node
+	} else {
+		newNode.UpdateTreeHeight()
+		return newNode
 	}
 }
